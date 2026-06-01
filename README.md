@@ -1,2 +1,21 @@
-# ML-System-Design-and-My-First-Data-Project-SafeCall-Voice-Guard-
+# SafeCall Voice Guard — ML System Design (ИТМО)
+
 Сервис в режиме, близком к реальному времени, анализирует аудиофрагмент телефонного звонка и предупреждает пользователя о высокой вероятности подделки голоса — тем самым снижая долю успешных мошеннических звонков с использованием голосовых дипфейков.
+
+## 📁 Структура репозитория
+
+| Папка | Тема | Формат |
+|-------|------|--------|
+| [DZ1/](DZ1/) | Бизнес-анализ | Markdown |
+| [DZ2/](DZ2/) | Консультация с экспертом | Markdown |
+| [DZ3/](DZ3/) | Бенчмаркинг | Markdown |
+| [DZ4/](DZ4/) | Данные и валидация (EDA) | Jupyter Notebook + Markdown |
+
+## 🔬 Датасет
+
+**ASVspoof 2019 LA** — 122 299 аудиофайлов (bonafide + spoof), 19 атакующих TTS/VC-систем.
+
+## 🛠 Стек
+
+- Python 3.14, NumPy, Pandas, Matplotlib, SoundFile
+- ASVspoof 2019 LA dataset

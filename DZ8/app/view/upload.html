@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Загрузка аудио — SafeCall{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <h3 class="mb-3">🎤 Проверить аудио на дипфейк</h3>
+            <p style="color: var(--sc-muted);">
+                Загрузите аудиофайл (WAV, OGG, MP3, FLAC). Модель XLSR-53 проанализирует запись
+                и определит вероятность синтезированной речи.
+            </p>
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="audioFile" class="form-label">Аудиофайл</label>
+                    <input type="file" class="form-control bg-dark text-light border-secondary"
+                           id="audioFile" name="file"
+                           accept=".wav,.ogg,.mp3,.flac" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                    Отправить на проверку
+                </button>
+            </form>
+            <div id="result" class="mt-3" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submitBtn');
+    const resultDiv = document.getElementById('result');
+    btn.disabled = true;
+    btn.textContent = 'Анализируем...';
+
+    const formData = new FormData();
+    formData.append('file', document.getElementById('audioFile').files[0]);
+
+    try {
+        const response = await fetch('/api/predict/send_task', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await response.json();
+        if (response.ok) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    ✅ Задача #${data.task_id} создана и отправлена на анализ.<br>
+                    <a href="/api/predict/history" class="alert-link">Смотреть историю →</a>
+                </div>`;
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">❌ ${data.detail}</div>`;
+        }
+    } catch (err) {
+        resultDiv.innerHTML = `<div class="alert alert-danger">❌ Ошибка: ${err.message}</div>`;
+    }
+
+    resultDiv.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Отправить на проверку';
+});
+</script>
+{% endblock %}

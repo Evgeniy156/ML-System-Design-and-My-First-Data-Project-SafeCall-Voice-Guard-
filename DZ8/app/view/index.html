@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}SafeCall — Детекция голосовых дипфейков{% endblock %}
+{% block content %}
+<div class="hero-gradient p-5 mb-4 text-center">
+    <h1 class="mb-3">🛡️ SafeCall Voice Guard</h1>
+    <p class="lead" style="color: var(--sc-muted);">
+        Система детекции голосовых дипфейков в телефонных звонках
+    </p>
+    <p style="color: var(--sc-muted);">
+        Модель XLSR-53 + MLP head &bull; F1 = 0.927 &bull; Threshold = 0.37
+    </p>
+    <a href="/api/predict/upload" class="btn btn-primary btn-lg mt-3">Проверить аудио</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <h5>🎯 Точность</h5>
+            <p style="color: var(--sc-muted);">F1 = 0.927 на eval-выборке ASVspoof2019 LA. Порог 0.37 оптимизирован под минимизацию FN (пропуск дипфейков).</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <h5>⚡ Fusion</h5>
+            <p style="color: var(--sc-muted);">ML + контекст (codec, VoIP, IP) = 100% на реальных файлах. Фьюжн повышает точность на практических кейсах.</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 h-100">
+            <h5>📈 Масштабирование</h5>
+            <p style="color: var(--sc-muted);">Docker Compose + RabbitMQ. Горизонтальное масштабирование воркеров: <code>--scale ml_worker=N</code></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

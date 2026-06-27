@@ -1,0 +1,129 @@
+services:
+  app:
+    build: ./app/
+    image: safecall-api:latest
+    container_name: safecall-api
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASS: ${POSTGRES_PASSWORD:-postgres}
+      DB_NAME: ${POSTGRES_DB:-safecall}
+      COOKIE_NAME: ${COOKIE_NAME:-SAFECALL_API}
+      SECRET_KEY: ${SECRET_KEY:-change-me-for-demo}
+      APP_NAME: ${APP_NAME:-SafeCall Voice Guard API}
+      APP_DESCRIPTION: ${APP_DESCRIPTION:-Deepfake voice detection}
+      DEBUG: ${DEBUG:-false}
+      API_VERSION: ${API_VERSION:-1.0}
+      THRESHOLD: ${THRESHOLD:-0.37}
+      MODEL_PATH: /app/weights/best_xlsr_head.pth
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-rmuser}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-rmpassword}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE:-safecall_tasks}
+    volumes:
+      - audio_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - safecall-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  ml_worker:
+    build: ./ml_worker/
+    image: safecall-ml-worker:latest
+    restart: unless-stopped
+    environment:
+      MODEL_PATH: /app/weights/best_xlsr_head.pth
+      THRESHOLD: ${THRESHOLD:-0.37}
+      HF_HOME: /root/.cache/huggingface
+      HF_HUB_DISABLE_XET: "1"
+      HF_HUB_DOWNLOAD_TIMEOUT: "120"
+      HF_HUB_ETAG_TIMEOUT: "30"
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-rmuser}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-rmpassword}
+      RABBITMQ_QUEUE: ${RABBITMQ_QUEUE:-safecall_tasks}
+    volumes:
+      - audio_uploads:/app/uploads:ro
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - safecall-network
+
+  web:
+    build: ./nginx/
+    image: safecall-nginx:latest
+    container_name: safecall-nginx
+    restart: unless-stopped
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - safecall-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: safecall-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-safecall}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-safecall}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - safecall-network
+
+  rabbitmq:
+    image: rabbitmq:3.13.1-management-alpine
+    container_name: safecall-rabbitmq
+    hostname: rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rmuser}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-rmpassword}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: -rabbit disk_free_limit 2147483648
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 20s
+      timeout: 10s
+      retries: 3
+    networks:
+      - safecall-network
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  audio_uploads:
+  hf_cache:
+
+networks:
+  safecall-network:
+    name: safecall-network
+    driver: bridge

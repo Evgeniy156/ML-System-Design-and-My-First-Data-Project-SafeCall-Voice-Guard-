@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Вход — SafeCall{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card p-4">
+            <h3 class="mb-3 text-center">Вход в систему</h3>
+            <form method="POST" action="/auth/token">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Email</label>
+                    <input type="email" class="form-control bg-dark text-light border-secondary"
+                           id="username" name="username" placeholder="admin@safecall.ru" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Пароль</label>
+                    <input type="password" class="form-control bg-dark text-light border-secondary"
+                           id="password" name="password" placeholder="admin123" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Войти</button>
+            </form>
+            <p class="text-center mt-3" style="color: var(--sc-muted); font-size: 0.85rem;">
+                Тестовый аккаунт: admin@safecall.ru / admin123
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
